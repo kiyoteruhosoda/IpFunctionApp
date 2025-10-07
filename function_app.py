@@ -20,13 +20,19 @@ def GetIpFunction(req: func.HttpRequest) -> func.HttpResponse:
     else:
         # それ以外は req.headers["X-Real-IP"] か req.headers["x-real-ip"] も試す
         ip = req.headers.get('X-Real-IP', req.headers.get('x-real-ip'))
-        if not ip:
-            # それもなければ req.remote_addr (ただしAzure Functionsでは未サポートの場合あり)
-            ip = req.headers.get('REMOTE_ADDR', 'unknown')
+        ip_list = []
+        if ip:
+            # カンマ区切りで複数IPが入る場合に対応
+            for ip_entry in ip.split(','):
+                ip_only = ip_entry.strip()
+                # IP:ポート形式の場合はIPだけにする
+                if ':' in ip_only:
+                    ip_only = ip_only.split(':')[0]
+                ip_list.append(ip_only)
 
-    result = {"ip": ip}
-    return func.HttpResponse(
-        json.dumps(result),
-        mimetype="application/json",
-        status_code=200
-    )
+        result = {"ip": ip_list} if len(ip_list) > 1 else {"ip": ip_list[0] if ip_list else "unknown"}
+        return func.HttpResponse(
+            json.dumps(result),
+            mimetype="application/json",
+            status_code=200
+        )
