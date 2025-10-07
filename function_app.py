@@ -14,6 +14,9 @@ def GetIpFunction(req: func.HttpRequest) -> func.HttpResponse:
     if ip:
         # 複数IPがカンマ区切りで入る場合があるので最初を取得
         ip = ip.split(',')[0].strip()
+        # IP:ポート形式の場合はIPだけにする
+        if ':' in ip:
+            ip = ip.split(':')[0]
     else:
         # それ以外は req.headers["X-Real-IP"] か req.headers["x-real-ip"] も試す
         ip = req.headers.get('X-Real-IP', req.headers.get('x-real-ip'))
